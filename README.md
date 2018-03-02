@@ -1,0 +1,1 @@
+# happy-maven-plugin
