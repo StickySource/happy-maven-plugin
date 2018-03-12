@@ -27,13 +27,18 @@ final class ApplicationValidationCallback
   public void onResponse(Call call, Response response) throws IOException {
     BufferedReader reader = new BufferedReader(response.body().charStream());
     String line = reader.readLine();
-    this.success = line.equals(applicationVersion);
+    if (line.equals(applicationVersion))
+      this.success = true;
+    else {
+      this.success = false;
+      this.failure = "expected " + applicationVersion + " but was " + line;
+    }
     this.running = false;
   }
 
   @Override
-  public void onFailure(Call call, IOException falilure) {
-    this.failure = falilure.getMessage();
+  public void onFailure(Call call, IOException failure) {
+    this.failure = failure.getMessage();
     this.success = false;
     this.running = false;
   }

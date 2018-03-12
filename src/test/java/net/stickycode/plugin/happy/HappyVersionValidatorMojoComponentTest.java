@@ -5,7 +5,6 @@ import static org.assertj.core.api.StrictAssertions.assertThat;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoFailureException;

@@ -1,10 +1,12 @@
 package net.stickycode.plugin.happy;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ApplicationValidationResults {
 
-  private List<ApplicationValidationCallback> callbacks;
+  private List<ApplicationValidationCallback> callbacks = new ArrayList<>();
 
   public void add(ApplicationValidationCallback callback) {
     callbacks.add(callback);
@@ -12,10 +14,10 @@ public class ApplicationValidationResults {
 
   public boolean running() {
     for (ApplicationValidationCallback c : callbacks) {
-      if (!c.running())
+      if (c.running())
         return true;
     }
-    
+
     return false;
   }
 
@@ -28,12 +30,10 @@ public class ApplicationValidationResults {
   }
 
   public String failureMessage() {
-    StringBuilder b = new StringBuilder();
-    for (ApplicationValidationCallback c : callbacks)
-      if (!c.success())
-        b.append(c.failureMessage()).append('\n');
-
-    return b.toString();
+    return callbacks.stream()
+      .filter(x -> !x.success())
+      .map(x -> x.failureMessage())
+      .collect(Collectors.joining("\n"));
   }
 
 }
