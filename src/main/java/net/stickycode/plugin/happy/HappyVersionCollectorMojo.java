@@ -2,6 +2,9 @@ package net.stickycode.plugin.happy;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
@@ -9,11 +12,14 @@ import java.nio.file.Paths;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
-@Mojo(name = "collect", threadSafe = true)
+@Mojo(name = "collect", threadSafe = true, defaultPhase = LifecyclePhase.COMPILE)
 public class HappyVersionCollectorMojo
     extends AbstractMojo {
 
@@ -32,6 +38,9 @@ public class HappyVersionCollectorMojo
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
 
+  @Component
+  private BuildContext buildContext;
+
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
@@ -39,15 +48,24 @@ public class HappyVersionCollectorMojo
     if (!file.getParentFile().mkdirs())
       throw new MojoFailureException("Failed to create directory " + file.getParentFile().getAbsolutePath());
 
-    try (PrintWriter writer = new PrintWriter(file, characterSet);) {
+    try (PrintWriter writer = new PrintWriter(outputWriter(file));) {
       writer.println(deriveContextPath() + ":" + getArtifactId() + "-" + project.getVersion());
     }
-    catch (FileNotFoundException e) {
-      getLog().error(e);
-      throw new MojoFailureException("failed to write versions file " + file.getAbsolutePath());
+
+    getLog().info("application version stored in  " + file.getAbsolutePath());
+  }
+
+  private OutputStreamWriter outputWriter(File file) throws MojoFailureException {
+    try {
+      return new OutputStreamWriter(buildContext.newFileOutputStream(file), characterSet);
     }
     catch (UnsupportedEncodingException e) {
+      getLog().error(e);
       throw new MojoFailureException("Character set " + characterSet + " is not something that I understand");
+    }
+    catch (IOException e) {
+      getLog().error(e);
+      throw new MojoFailureException("failed to write versions file " + file.getAbsolutePath());
     }
   }
 
@@ -58,7 +76,7 @@ public class HappyVersionCollectorMojo
     int indexOfHyphen = getArtifactId().indexOf("-");
     if (indexOfHyphen == -1)
       return "/";
-    
+
     return getArtifactId().substring(indexOfHyphen).replaceAll("-", "/");
   }
 

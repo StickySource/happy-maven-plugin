@@ -1,0 +1,27 @@
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>collect</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute>
+          <runOnIncremental>true</runOnIncremental>
+          <runOnConfiguration>false</runOnConfiguration>
+        </execute>
+      </action>
+    </pluginExecution>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>validate</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <ignore />
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>
