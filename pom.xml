@@ -35,10 +35,11 @@
       <version>[3.5.2]</version>
       <scope>test</scope>
     </dependency>
+    
     <dependency>
       <groupId>net.stickycode.composite</groupId>
       <artifactId>sticky-composite-unittest</artifactId>
-      <version>[1.7,2)</version>
+      <version>[3,4)</version>
       <scope>test</scope>
     </dependency>
 

@@ -4,8 +4,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.stickycode.plugins.it</groupId>
-  <artifactId>happy-maven-plugin-collate</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <artifactId>happy-maven-plugin-discover</artifactId>
+  <version>1.5</version>
   <packaging>pom</packaging>
 
   <build>
