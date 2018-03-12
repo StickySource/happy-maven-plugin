@@ -2,8 +2,6 @@ package net.stickycode.plugin.happy;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
@@ -22,7 +20,7 @@ public class HappyVersionCollectorMojo
   @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
 
-  @Parameter(defaultValue = "/", required = true)
+  @Parameter(required = false)
   private String contextPath;
 
   @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
@@ -42,7 +40,7 @@ public class HappyVersionCollectorMojo
       throw new MojoFailureException("Failed to create directory " + file.getParentFile().getAbsolutePath());
 
     try (PrintWriter writer = new PrintWriter(file, characterSet);) {
-      writer.println(contextPath + ":" + project.getArtifactId() + "-" + project.getVersion());
+      writer.println(deriveContextPath() + ":" + getArtifactId() + "-" + project.getVersion());
     }
     catch (FileNotFoundException e) {
       getLog().error(e);
@@ -51,6 +49,21 @@ public class HappyVersionCollectorMojo
     catch (UnsupportedEncodingException e) {
       throw new MojoFailureException("Character set " + characterSet + " is not something that I understand");
     }
+  }
+
+  String deriveContextPath() {
+    if (contextPath != null)
+      return contextPath;
+
+    int indexOfHyphen = getArtifactId().indexOf("-");
+    if (indexOfHyphen == -1)
+      return "/";
+    
+    return getArtifactId().substring(indexOfHyphen).replaceAll("-", "/");
+  }
+
+  String getArtifactId() {
+    return project.getArtifactId();
   }
 
 }
