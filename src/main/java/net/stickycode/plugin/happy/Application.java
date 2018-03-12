@@ -7,6 +7,9 @@ public class Application {
   private String version;
 
   public Application(String line) {
+    if (line == null)
+      throw new InvalidApplicationVersionException(line);
+
     String[] split = line.split(":");
     if (split.length != 2)
       throw new InvalidApplicationVersionException(line);
