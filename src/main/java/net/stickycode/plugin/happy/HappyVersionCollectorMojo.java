@@ -26,7 +26,7 @@ public class HappyVersionCollectorMojo
   @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
   private String path;
 
-  @Parameter(defaultValue = "${project.build.directory}", required = true)
+  @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
   private String testDirectory;
 
   @Parameter(defaultValue = "UTF-8", required = true)
