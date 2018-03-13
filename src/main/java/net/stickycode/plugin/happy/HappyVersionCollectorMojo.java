@@ -1,9 +1,7 @@
 package net.stickycode.plugin.happy;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +35,7 @@ public class HappyVersionCollectorMojo
 
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
-  
+
   @Component
   private BuildContext buildContext;
 
@@ -45,8 +43,9 @@ public class HappyVersionCollectorMojo
   public void execute()
       throws MojoExecutionException, MojoFailureException {
     File file = Paths.get(testDirectory, path).toFile();
-    if (!file.getParentFile().mkdirs())
-      throw new MojoFailureException("Failed to create directory " + file.getParentFile().getAbsolutePath());
+    if (!file.getParentFile().exists())
+      if (!file.getParentFile().mkdirs())
+        throw new MojoFailureException("Failed to create directory " + file.getParentFile().getAbsolutePath());
 
     try (PrintWriter writer = new PrintWriter(outputWriter(file));) {
       writer.println(deriveContextPath() + ":" + getArtifactId() + "-" + project.getVersion());
