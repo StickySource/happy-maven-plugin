@@ -52,14 +52,14 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "true", required = true)
   private boolean failBuild;
 
-  @Parameter(defaultValue = "1", required = true)
-  private long connectTimeoutMillis = 1;
+  @Parameter(defaultValue = "1000", required = true)
+  private long connectTimeoutMillis = 1000;
 
-  @Parameter(defaultValue = "1", required = true)
-  private long writeTimeoutMillis = 1;
+  @Parameter(defaultValue = "1000", required = true)
+  private long writeTimeoutMillis = 1000;
 
-  @Parameter(defaultValue = "3", required = true)
-  private long readTimeoutMillis = 3;
+  @Parameter(defaultValue = "3000", required = true)
+  private long readTimeoutMillis = 3000;
 
   private ClassLoader classloader;
 
@@ -113,6 +113,8 @@ public class HappyVersionValidatorMojo
   }
 
   void setupHttpClient() {
+    getLog().info(String.format("http client timeouts connect:%dms read:%dms write:%dms",
+      connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis));
     this.client = new OkHttpClient.Builder()
       .connectTimeout(connectTimeoutMillis, TimeUnit.MILLISECONDS)
       .writeTimeout(writeTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -162,7 +164,7 @@ public class HappyVersionValidatorMojo
   }
 
   private Application loadApplication(URL url) throws MojoFailureException {
-    getLog().info(url.toString());
+    getLog().info("loading application version from " + url.toString());
     try (InputStream stream = url.openStream();) {
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
       String line = reader.readLine();
@@ -181,7 +183,7 @@ public class HappyVersionValidatorMojo
 
   private Enumeration<URL> applicationUrls(String path) throws MojoFailureException {
     try {
-      getLog().info("loading versions from " + path);
+      getLog().debug("loading versions for resources called " + path);
       return getClassloader().getResources(path);
     }
     catch (IOException e) {

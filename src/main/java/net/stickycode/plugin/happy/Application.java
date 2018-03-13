@@ -28,7 +28,7 @@ public class Application {
 
   @Override
   public String toString() {
-    return version + "@" + contextPath;
+    return version + " @ " + contextPath;
   }
 
   @Override

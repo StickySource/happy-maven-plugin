@@ -1,0 +1,18 @@
+import java.io.*;
+import java.util.*;
+
+import org.codehaus.plexus.util.*;
+
+File versionFile = new File( basedir, "target/classes/META-INF/sticky/happy-versions" );
+System.out.println( "Checking for existence of first test file: " + versionFile );
+if (!versionFile.exists())
+  throw new RuntimeException(versionFile.toString() + " not found" );
+
+
+String version = FileUtils.fileRead( versionFile, "UTF-8" ).trim();
+
+if (version.equals("/maven/plugin/timing:happy-maven-plugin-timing-1.5"))
+  return true;
+
+System.err.println("Expected " + version + " to be /maven/plugin/timing:happy-maven-plugin-timing-1.5");
+return false;
