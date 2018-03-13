@@ -20,7 +20,7 @@ public class HappyVersionValidatorMojoComponentTest {
         return "http://localhost:7878";
       }
     };
-
+    mojo.setupHttpClient();
     ApplicationValidationCallback queueRequest = mojo.queueRequest(new Application("/:blah-1.2"));
     while (queueRequest.running())
       Thread.sleep(100);
@@ -51,6 +51,7 @@ public class HappyVersionValidatorMojoComponentTest {
         return "http://localhost:" + blackhole.getLocalPort();
       }
     };
+    mojo.setupHttpClient();
 
     ApplicationValidationCallback queueRequest = mojo.queueRequest(new Application("/:blah-1.2"));
 
@@ -76,6 +77,7 @@ public class HappyVersionValidatorMojoComponentTest {
 
   private List<Application> check(String path) throws MojoFailureException {
     return new HappyVersionValidatorMojo() {
+
       // can't build the classpath from the maven context now
       // as we don't have one
       ClassLoader getClassloader() {

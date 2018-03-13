@@ -46,24 +46,30 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
 
-  @Parameter(defaultValue = "${descriptor}", required = true)
+  @Parameter(defaultValue = "${descriptor}", required = true, readonly = true)
   private PluginDescriptor descriptor;
 
   @Parameter(defaultValue = "true", required = true)
   private boolean failBuild;
 
+  @Parameter(defaultValue = "1", required = true)
+  private long connectTimeoutMillis = 1;
+
+  @Parameter(defaultValue = "1", required = true)
+  private long writeTimeoutMillis = 1;
+
+  @Parameter(defaultValue = "3", required = true)
+  private long readTimeoutMillis = 3;
+
   private ClassLoader classloader;
 
-  OkHttpClient client = new OkHttpClient.Builder()
-    .connectTimeout(1, TimeUnit.SECONDS)
-    .writeTimeout(1, TimeUnit.SECONDS)
-    .readTimeout(3, TimeUnit.SECONDS)
-    .build();
+  private OkHttpClient client;
 
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
     buildClasspath();
+    setupHttpClient();
 
     ApplicationValidationResults results = new ApplicationValidationResults();
     for (Application application : loadApplications(versionFiles)) {
@@ -72,7 +78,7 @@ public class HappyVersionValidatorMojo
 
     while (results.running())
       try {
-        getLog().info(String.format("waiting on %d applications ", results.runningCount()));
+        getLog().debug(String.format("waiting on %d applications ", results.runningCount()));
         Thread.sleep(100);
       }
       catch (InterruptedException e) {
@@ -86,7 +92,7 @@ public class HappyVersionValidatorMojo
         throw new MojoFailureException(results.failureMessage());
   }
 
-  private void buildClasspath() throws MojoFailureException {
+  void buildClasspath() throws MojoFailureException {
     try {
       List<String> classpathElements = project.getCompileClasspathElements();
       classpathElements.add(project.getBuild().getOutputDirectory());
@@ -106,12 +112,20 @@ public class HappyVersionValidatorMojo
     }
   }
 
+  void setupHttpClient() {
+    this.client = new OkHttpClient.Builder()
+      .connectTimeout(connectTimeoutMillis, TimeUnit.MILLISECONDS)
+      .writeTimeout(writeTimeoutMillis, TimeUnit.MILLISECONDS)
+      .readTimeout(readTimeoutMillis, TimeUnit.MILLISECONDS)
+      .build();
+  }
+
   ApplicationValidationCallback queueRequest(Application application) {
     Request request = new Request.Builder()
       .url(applicationUrl(application.getContextPath()))
       .build();
 
-    getLog().info("requesting " + request);
+    getLog().debug("requesting " + request);
     ApplicationValidationCallback callback = new ApplicationValidationCallback(application.getVersion());
     client.newCall(request).enqueue(callback);
     return callback;
