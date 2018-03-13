@@ -19,7 +19,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-@Mojo(name = "collect", threadSafe = true, defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(name = "collect", threadSafe = true, defaultPhase = LifecyclePhase.GENERATE_RESOURCES, requiresProject = true)
 public class HappyVersionCollectorMojo
     extends AbstractMojo {
 
@@ -37,7 +37,7 @@ public class HappyVersionCollectorMojo
 
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
-
+  
   @Component
   private BuildContext buildContext;
 
@@ -52,7 +52,7 @@ public class HappyVersionCollectorMojo
       writer.println(deriveContextPath() + ":" + getArtifactId() + "-" + project.getVersion());
     }
 
-    getLog().info("application version stored in  " + file.getAbsolutePath());
+    getLog().info("application version stored in " + file.getAbsolutePath());
   }
 
   private OutputStreamWriter outputWriter(File file) throws MojoFailureException {

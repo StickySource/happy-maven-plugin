@@ -36,4 +36,15 @@ public class ApplicationValidationResults {
       .collect(Collectors.joining("\n"));
   }
 
+  public Long runningCount() {
+    return callbacks.stream()
+      .filter(x -> x.running())
+      .collect(Collectors.counting());
+  }
+  
+  @Override
+  public String toString() {
+    return callbacks.toString();
+  }
+
 }

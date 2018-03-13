@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2018 RedEngine Ltd, http://www.redengine.co.nz. All rights reserved. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>net.stickycode.plugins.it</groupId>
+  <artifactId>happy-maven-plugin-discover</artifactId>
+  <version>1.5</version>
+  <packaging>pom</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.stickycode.plugins</groupId>
+        <artifactId>happy-maven-plugin</artifactId>
+        <version>@pom.version@</version>
+        <executions>
+          <execution>
+            <id>collect</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>collect</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>validate</id>
+            <phase>test</phase>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+            <configuration>
+              <failBuild>false</failBuild>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>

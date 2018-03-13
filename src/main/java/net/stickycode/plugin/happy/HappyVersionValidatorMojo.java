@@ -1,42 +1,58 @@
 package net.stickycode.plugin.happy;
 
+import static java.lang.String.join;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
-@Mojo(name = "validate", threadSafe = true, defaultPhase = LifecyclePhase.INTEGRATION_TEST)
+@Mojo(name = "validate", threadSafe = true, requiresProject = true, defaultPhase = LifecyclePhase.INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.TEST)
 public class HappyVersionValidatorMojo
     extends AbstractMojo {
 
   @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
 
-  @Parameter(defaultValue = "/META-INF/sticky/happy-versions", required = true)
+  @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
   private String[] versionFiles;
 
-  @Parameter(defaultValue = "https://localhost", required = true)
+  @Parameter(defaultValue = "http://localhost", required = true)
   private String targetDomain;
 
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
+
+  @Parameter(defaultValue = "${descriptor}", required = true)
+  private PluginDescriptor descriptor;
+
+  @Parameter(defaultValue = "true", required = true)
+  private boolean failBuild;
+
+  private ClassLoader classloader;
 
   OkHttpClient client = new OkHttpClient.Builder()
     .connectTimeout(1, TimeUnit.SECONDS)
@@ -47,6 +63,8 @@ public class HappyVersionValidatorMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
+    buildClasspath();
+
     ApplicationValidationResults results = new ApplicationValidationResults();
     for (Application application : loadApplications(versionFiles)) {
       results.add(queueRequest(application));
@@ -54,14 +72,38 @@ public class HappyVersionValidatorMojo
 
     while (results.running())
       try {
+        getLog().info(String.format("waiting on %d applications ", results.runningCount()));
         Thread.sleep(100);
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
 
-    if (results.hasFailures())
-      throw new MojoFailureException(results.failureMessage());
+    getLog().info(results.toString());
+
+    if (failBuild)
+      if (results.hasFailures())
+        throw new MojoFailureException(results.failureMessage());
+  }
+
+  private void buildClasspath() throws MojoFailureException {
+    try {
+      List<String> classpathElements = project.getCompileClasspathElements();
+      classpathElements.add(project.getBuild().getOutputDirectory());
+      classpathElements.add(project.getBuild().getTestOutputDirectory());
+      List<URL> urls = classpathElements.stream().map(x -> {
+        try {
+          return new File(x).toURI().toURL();
+        }
+        catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
+      }).collect(Collectors.toList());
+      this.classloader = new URLClassLoader(urls.toArray(new URL[classpathElements.size()]), getClass().getClassLoader());
+    }
+    catch (DependencyResolutionRequiredException e) {
+      throw new MojoFailureException("Dependencies not resolved", e);
+    }
   }
 
   ApplicationValidationCallback queueRequest(Application application) {
@@ -97,6 +139,11 @@ public class HappyVersionValidatorMojo
         applications.add(loadApplication(url));
       }
     }
+
+    if (applications.isEmpty())
+      throw new MojoFailureException("No applications found on paths " + join(",", paths));
+
+    getLog().info("Found applications " + applications);
     return applications;
   }
 
@@ -121,12 +168,16 @@ public class HappyVersionValidatorMojo
   private Enumeration<URL> applicationUrls(String path) throws MojoFailureException {
     try {
       getLog().info("loading versions from " + path);
-      return getClass().getClassLoader().getResources(path);
+      return getClassloader().getResources(path);
     }
     catch (IOException e) {
       getLog().error(e);
       throw new MojoFailureException("failed to load application versions " + path);
     }
+  }
+
+  ClassLoader getClassloader() {
+    return classloader;
   }
 
 }

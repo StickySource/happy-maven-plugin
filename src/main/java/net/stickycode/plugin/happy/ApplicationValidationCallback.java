@@ -54,4 +54,15 @@ final class ApplicationValidationCallback
   public String failureMessage() {
     return failure;
   }
+
+  @Override
+  public String toString() {
+    if (running)
+      return "checking " + applicationVersion;
+
+    if (success)
+      return "validated " + applicationVersion;
+
+    return failure;
+  }
 }
