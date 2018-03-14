@@ -1,8 +1,13 @@
 package net.stickycode.plugin.happy;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public class ApplicationValidationResults {
 
@@ -41,10 +46,16 @@ public class ApplicationValidationResults {
       .filter(x -> x.running())
       .collect(Collectors.counting());
   }
-  
+
   @Override
   public String toString() {
     return callbacks.toString();
+  }
+
+  public List<ApplicationValidationCallback> failures() {
+    return callbacks.stream()
+      .filter(x -> !x.success())
+      .collect(Collectors.toList());
   }
 
 }

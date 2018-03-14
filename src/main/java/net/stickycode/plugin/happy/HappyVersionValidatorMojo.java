@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -61,6 +62,12 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "3000", required = true)
   private long readTimeoutMillis = 3000;
 
+  @Parameter(defaultValue = "60", required = true)
+  private long retryDurationSeconds = 60;
+
+  @Parameter(defaultValue = "5", required = true)
+  private long retryPeriodSeconds = 5;
+
   private ClassLoader classloader;
 
   private OkHttpClient client;
@@ -70,16 +77,24 @@ public class HappyVersionValidatorMojo
       throws MojoExecutionException, MojoFailureException {
     buildClasspath();
     setupHttpClient();
-
+    Instant start = Instant.now().plusSeconds(retryDurationSeconds);
     ApplicationValidationResults results = new ApplicationValidationResults();
     for (Application application : loadApplications(versionFiles)) {
-      results.add(queueRequest(application));
+      results.add(createRequest(application));
     }
+
+    getLog().info(String.format("Validating for up to %ds, retrying every %ds as needed",
+      retryDurationSeconds, retryPeriodSeconds));
 
     while (results.running())
       try {
-        getLog().debug(String.format("waiting on %d applications ", results.runningCount()));
-        Thread.sleep(100);
+        getLog().info(String.format("waiting on %d applications ", results.runningCount()));
+        Thread.sleep(retryPeriodSeconds * 1000);
+        if (start.isBefore(Instant.now()))
+          for (ApplicationValidationCallback callback : results.failures()) {
+            callback.reset();
+            queueRequest(callback);
+          }
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);
@@ -122,14 +137,17 @@ public class HappyVersionValidatorMojo
       .build();
   }
 
-  ApplicationValidationCallback queueRequest(Application application) {
+  void queueRequest(ApplicationValidationCallback callback) {
     Request request = new Request.Builder()
-      .url(applicationUrl(application.getContextPath()))
+      .url(applicationUrl(callback.getContextPath()))
       .build();
 
-    getLog().debug("requesting " + request);
-    ApplicationValidationCallback callback = new ApplicationValidationCallback(application.getVersion());
     client.newCall(request).enqueue(callback);
+  }
+
+  ApplicationValidationCallback createRequest(Application application) {
+    ApplicationValidationCallback callback = new ApplicationValidationCallback(application);
+    queueRequest(callback);
     return callback;
   }
 

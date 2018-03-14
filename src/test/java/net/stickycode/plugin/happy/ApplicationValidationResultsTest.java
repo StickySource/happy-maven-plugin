@@ -94,7 +94,7 @@ public class ApplicationValidationResultsTest {
   }
 
   private ApplicationValidationCallback callback() {
-    return new ApplicationValidationCallback("blah-1.2");
+    return new ApplicationValidationCallback(new Application("/:blah-1.2"));
   }
 
 }

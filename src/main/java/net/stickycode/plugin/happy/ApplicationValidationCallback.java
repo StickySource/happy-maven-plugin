@@ -12,28 +12,32 @@ final class ApplicationValidationCallback
 
   private boolean running = true;
 
-  private boolean success;
+  private Boolean success;
 
   private String failure;
 
-  private String applicationVersion;
+  private Application application;
 
-  public ApplicationValidationCallback(String applicationVersion) {
+  public ApplicationValidationCallback(Application application) {
     super();
-    this.applicationVersion = applicationVersion;
+    this.application = application;
   }
 
   @Override
   public void onResponse(Call call, Response response) throws IOException {
     BufferedReader reader = new BufferedReader(response.body().charStream());
     String line = reader.readLine();
-    if (line.equals(applicationVersion))
+    if (line.equals(getApplicationVersion()))
       this.success = true;
     else {
       this.success = false;
-      this.failure = "expected " + applicationVersion + " but was " + line;
+      this.failure = "expected " + getApplicationVersion() + " but was " + line;
     }
     this.running = false;
+  }
+
+  String getApplicationVersion() {
+    return application.getVersion();
   }
 
   @Override
@@ -58,11 +62,21 @@ final class ApplicationValidationCallback
   @Override
   public String toString() {
     if (running)
-      return "checking " + applicationVersion;
+      return "checking " + getApplicationVersion();
 
     if (success)
-      return "validated " + applicationVersion;
+      return "validated " + getApplicationVersion();
 
     return failure;
   }
+
+  public String getContextPath() {
+    return application.getContextPath();
+  }
+
+  public void reset() {
+    this.success = null;
+    this.failure = null;
+  }
+
 }

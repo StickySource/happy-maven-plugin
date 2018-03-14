@@ -21,7 +21,7 @@ public class HappyVersionValidatorMojoComponentTest {
       }
     };
     mojo.setupHttpClient();
-    ApplicationValidationCallback queueRequest = mojo.queueRequest(new Application("/:blah-1.2"));
+    ApplicationValidationCallback queueRequest = mojo.createRequest(new Application("/:blah-1.2"));
     while (queueRequest.running())
       Thread.sleep(100);
 
@@ -53,7 +53,7 @@ public class HappyVersionValidatorMojoComponentTest {
     };
     mojo.setupHttpClient();
 
-    ApplicationValidationCallback queueRequest = mojo.queueRequest(new Application("/:blah-1.2"));
+    ApplicationValidationCallback queueRequest = mojo.createRequest(new Application("/:blah-1.2"));
 
     while (queueRequest.running())
       Thread.sleep(100);
