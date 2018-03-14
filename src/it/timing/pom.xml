@@ -34,6 +34,8 @@
               <connectTimeoutMillis>2000</connectTimeoutMillis>
               <readTimeoutMillis>5000</readTimeoutMillis>
               <writeTimeoutMillis>3000</writeTimeoutMillis>
+              <retryDurationSeconds>4</retryDurationSeconds>
+              <retryPeriodSeconds>1</retryPeriodSeconds>
             </configuration>
           </execution>
         </executions>

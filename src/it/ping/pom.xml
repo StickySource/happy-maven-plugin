@@ -31,6 +31,8 @@
             </goals>
             <configuration>
               <failBuild>false</failBuild>
+              <retryDurationSeconds>4</retryDurationSeconds>
+              <retryPeriodSeconds>1</retryPeriodSeconds>
             </configuration>
           </execution>
         </executions>
