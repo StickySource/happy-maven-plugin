@@ -88,7 +88,7 @@ public class HappyVersionValidatorMojo
     getLog().info(String.format("Validating for up to %ds, retrying every %ds as needed",
       retryDurationSeconds, retryPeriodSeconds));
 
-    while (results.running())
+    while (Instant.now().isBefore(finish) && !results.success())
       try {
         getLog().info(String.format("waiting on %d applications ", results.runningCount()));
         Thread.sleep(retryPeriodSeconds * 1000);

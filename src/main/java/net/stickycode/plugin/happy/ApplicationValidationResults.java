@@ -59,4 +59,13 @@ public class ApplicationValidationResults {
       .collect(Collectors.toList());
   }
 
+  public boolean success() {
+    for (ApplicationValidationCallback c : callbacks) {
+      if (c.running() || !c.success())
+        return false;
+    }
+
+    return true;
+  }
+
 }
