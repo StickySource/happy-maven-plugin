@@ -65,6 +65,20 @@ public class ApplicationValidationResultsTest {
     assertThat(results.failureMessage()).isEqualTo("expected blah-1.2 but was blah-2.7");
   }
 
+  @Test
+  public void oneFailureThenReset() throws IOException {
+    ApplicationValidationCallback callback = callback();
+    callback.onResponse(null, response("blah-2.7"));
+    ApplicationValidationResults results = results(callback);
+    assertThat(results.running()).isFalse();
+    assertThat(results.hasFailures()).isTrue();
+    assertThat(results.failureMessage()).isEqualTo("expected blah-1.2 but was blah-2.7");
+    callback.reset();
+    assertThat(results.running()).isTrue();
+    assertThat(results.hasFailures()).isFalse();
+    assertThat(results.failureMessage()).isEmpty();
+  }
+
   private Response response(String result) {
     return new Response.Builder()
       .request(request())

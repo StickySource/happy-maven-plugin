@@ -39,10 +39,10 @@ public class HappyVersionValidatorMojo
   private MavenProject project;
 
   @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
-  private String[] versionFiles;
+  private String[] versionFiles = new String[] { "META-INF/sticky/happy-versions" };
 
   @Parameter(defaultValue = "http://localhost", required = true)
-  private String targetDomain;
+  private String targetDomain = "http://localhost";
 
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
@@ -51,7 +51,7 @@ public class HappyVersionValidatorMojo
   private PluginDescriptor descriptor;
 
   @Parameter(defaultValue = "true", required = true)
-  private boolean failBuild;
+  private boolean failBuild = true;
 
   @Parameter(defaultValue = "1000", required = true)
   private long connectTimeoutMillis = 1000;
@@ -63,10 +63,10 @@ public class HappyVersionValidatorMojo
   private long readTimeoutMillis = 3000;
 
   @Parameter(defaultValue = "60", required = true)
-  private long retryDurationSeconds = 60;
+  private long retryDurationSeconds = 3;
 
   @Parameter(defaultValue = "5", required = true)
-  private long retryPeriodSeconds = 5;
+  private long retryPeriodSeconds = 1;
 
   private ClassLoader classloader;
 
@@ -77,7 +77,9 @@ public class HappyVersionValidatorMojo
       throws MojoExecutionException, MojoFailureException {
     buildClasspath();
     setupHttpClient();
-    Instant start = Instant.now().plusSeconds(retryDurationSeconds);
+
+    Instant finish = Instant.now().plusSeconds(retryDurationSeconds);
+
     ApplicationValidationResults results = new ApplicationValidationResults();
     for (Application application : loadApplications(versionFiles)) {
       results.add(createRequest(application));
@@ -90,7 +92,7 @@ public class HappyVersionValidatorMojo
       try {
         getLog().info(String.format("waiting on %d applications ", results.runningCount()));
         Thread.sleep(retryPeriodSeconds * 1000);
-        if (start.isBefore(Instant.now()))
+        if (Instant.now().isBefore(finish))
           for (ApplicationValidationCallback callback : results.failures()) {
             callback.reset();
             queueRequest(callback);
@@ -109,9 +111,9 @@ public class HappyVersionValidatorMojo
 
   void buildClasspath() throws MojoFailureException {
     try {
-      List<String> classpathElements = project.getCompileClasspathElements();
-      classpathElements.add(project.getBuild().getOutputDirectory());
-      classpathElements.add(project.getBuild().getTestOutputDirectory());
+      List<String> classpathElements = getProject().getCompileClasspathElements();
+      classpathElements.add(getProject().getBuild().getOutputDirectory());
+      classpathElements.add(getProject().getBuild().getTestOutputDirectory());
       List<URL> urls = classpathElements.stream().map(x -> {
         try {
           return new File(x).toURI().toURL();
@@ -125,6 +127,10 @@ public class HappyVersionValidatorMojo
     catch (DependencyResolutionRequiredException e) {
       throw new MojoFailureException("Dependencies not resolved", e);
     }
+  }
+
+  MavenProject getProject() {
+    return project;
   }
 
   void setupHttpClient() {

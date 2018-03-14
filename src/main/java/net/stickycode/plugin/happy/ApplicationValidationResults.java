@@ -28,7 +28,7 @@ public class ApplicationValidationResults {
 
   public boolean hasFailures() {
     for (ApplicationValidationCallback c : callbacks)
-      if (!c.success())
+      if (!c.running() && !c.success())
         return true;
 
     return false;
@@ -36,6 +36,7 @@ public class ApplicationValidationResults {
 
   public String failureMessage() {
     return callbacks.stream()
+      .filter(x -> !x.running())
       .filter(x -> !x.success())
       .map(x -> x.failureMessage())
       .collect(Collectors.joining("\n"));

@@ -12,7 +12,7 @@ final class ApplicationValidationCallback
 
   private boolean running = true;
 
-  private Boolean success;
+  private boolean success;
 
   private String failure;
 
@@ -61,10 +61,10 @@ final class ApplicationValidationCallback
 
   @Override
   public String toString() {
-    if (running)
+    if (running())
       return "checking " + getApplicationVersion();
 
-    if (success)
+    if (success())
       return "validated " + getApplicationVersion();
 
     return failure;
@@ -75,8 +75,9 @@ final class ApplicationValidationCallback
   }
 
   public void reset() {
-    this.success = null;
+    this.success = false;
     this.failure = null;
+    this.running = true;
   }
 
 }
