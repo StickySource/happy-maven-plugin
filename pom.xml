@@ -51,6 +51,12 @@
     </dependency>
 
     <dependency>
+      <groupId>net.stickycode.bootstrap</groupId>
+      <artifactId>sticky-bootstrap-api</artifactId>
+      <version>[3,4)</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.plexus</groupId>
       <artifactId>plexus-build-api</artifactId>
       <version>[0.0.7]</version>
