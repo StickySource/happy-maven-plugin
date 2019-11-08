@@ -1,6 +1,7 @@
 package net.stickycode.plugin.happy;
 
-import static java.lang.String.join;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,8 +29,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import static java.lang.String.join;
 
 @Mojo(name = "validate", threadSafe = true, requiresProject = true, defaultPhase = LifecyclePhase.INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.TEST)
 public class HappyVersionValidatorMojo
@@ -159,7 +159,9 @@ public class HappyVersionValidatorMojo
 
   URL applicationUrl(String contextPath) {
     try {
-      return new URL(getTargetDomain() + contextPath + "version");
+      URL url = new URL(getTargetDomain() + contextPath + "version");
+      getLog().info(String.format("add url %s", url.toString()));
+      return url;
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
@@ -176,7 +178,7 @@ public class HappyVersionValidatorMojo
       Enumeration<URL> urls = applicationUrls(path);
       while (urls.hasMoreElements()) {
         URL url = urls.nextElement();
-        applications.add(loadApplication(url));
+        applications.addAll(loadApplication(url));
       }
     }
 
@@ -187,15 +189,21 @@ public class HappyVersionValidatorMojo
     return applications;
   }
 
-  private Application loadApplication(URL url) throws MojoFailureException {
+  private List<Application> loadApplication(URL url) throws MojoFailureException {
     getLog().info("loading application version from " + url.toString());
     try (InputStream stream = url.openStream();) {
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-      String line = reader.readLine();
-      if (line == null)
+
+      List<Application> applications = new ArrayList<>();
+      while (reader.ready()) {
+        String line = reader.readLine();
+        applications.add(new Application(line));
+      }
+
+      if (applications.isEmpty())
         throw new MojoFailureException("No contents found in " + url.toString());
 
-      return new Application(line);
+      return applications;
 
     }
     catch (IOException e) {

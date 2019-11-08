@@ -73,6 +73,7 @@ public class HappyVersionValidatorMojoComponentTest {
   @Test
   public void loadVersions() throws MojoFailureException {
     assertThat(check("META-INF/sticky/happy-versions")).contains(new Application("/:blah-1.2"));
+    assertThat(check("META-INF/sticky/happy-versions")).contains(new Application("/foo:foo-1.1"));
   }
 
   private List<Application> check(String path) throws MojoFailureException {
