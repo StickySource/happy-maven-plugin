@@ -1,17 +1,16 @@
 package net.stickycode.plugin.happy;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-
 public class ApplicationValidationResults {
 
   private List<ApplicationValidationCallback> callbacks = new ArrayList<>();
+
+  public void add(Application application) {
+
+  }
 
   public void add(ApplicationValidationCallback callback) {
     callbacks.add(callback);

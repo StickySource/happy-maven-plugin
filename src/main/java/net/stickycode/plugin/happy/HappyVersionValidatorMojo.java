@@ -1,27 +1,11 @@
 package net.stickycode.plugin.happy;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -32,7 +16,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-import static java.lang.String.join;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 @Mojo(name = "validate", threadSafe = true, requiresProject = true, defaultPhase = LifecyclePhase.INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.TEST)
 public class HappyVersionValidatorMojo
@@ -41,8 +26,8 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
 
-  @Parameter(defaultValue = "${project.build.outputDirectory}/happy.versions", required = true)
-  private String[] versionFiles = new String[] { "target/happy.versions" };
+  @Parameter(required = true)
+  private List<ApplicationVersions> applicationVersions;
 
   @Parameter(defaultValue = "http://localhost", required = true)
   private String targetDomain = "http://localhost";
@@ -81,9 +66,16 @@ public class HappyVersionValidatorMojo
     Instant finish = Instant.now().plusSeconds(retryDurationSeconds);
 
     ApplicationValidationResults results = new ApplicationValidationResults();
-    for (Application application : loadApplications(getVersionFiles())) {
-      results.add(createRequest(application));
+    for (ApplicationVersions versions : getApplicationVersions()) {
+      for (Application application : versions.loadApplications()) {
+        if (versions.validateApplicationsDirectly())
+          results.add(createRequest(application));
+        else
+          results.add(application);
+      }
     }
+
+    getLog().info("Found applications " + results);
 
     getLog().info(String.format("Validating for up to %ds, retrying every %ds as needed",
       retryDurationSeconds, retryPeriodSeconds));
@@ -109,8 +101,9 @@ public class HappyVersionValidatorMojo
         throw new MojoFailureException(results.failureMessage());
   }
 
-  String[] getVersionFiles() {
-    return versionFiles;
+
+  List<ApplicationVersions> getApplicationVersions() {
+    return applicationVersions;
   }
 
   MavenProject getProject() {
@@ -154,45 +147,6 @@ public class HappyVersionValidatorMojo
 
   String getTargetDomain() {
     return targetDomain;
-  }
-
-  List<Application> loadApplications(String... paths) throws MojoFailureException {
-    List<Application> applications = new ArrayList<>();
-    for (String path : paths) {
-      applications.addAll(loadApplication(Paths.get(path)));
-    }
-
-    if (applications.isEmpty())
-      throw new MojoFailureException("No applications found on paths " + join(",", paths));
-
-    getLog().info("Found applications " + applications);
-    return applications;
-  }
-
-  private List<Application> loadApplication(Path path) throws MojoFailureException {
-    getLog().info("loading application version from " + path.toString());
-    try (BufferedReader reader = versionsFileReader(path);) {
-      List<Application> applications = new ArrayList<>();
-      while (reader.ready()) {
-        String line = reader.readLine();
-        applications.add(new Application(line));
-      }
-
-      if (applications.isEmpty())
-        throw new MojoFailureException("No contents found in " + path.toString());
-
-      return applications;
-
-    }
-    catch (IOException e) {
-      getLog().error(e);
-      throw new MojoFailureException("failed to load application versions from " + path);
-    }
-
-  }
-
-  BufferedReader versionsFileReader(Path path) throws IOException {
-    return Files.newBufferedReader(path);
   }
 
 }

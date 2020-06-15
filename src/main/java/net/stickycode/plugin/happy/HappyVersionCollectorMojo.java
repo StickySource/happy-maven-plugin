@@ -28,7 +28,7 @@ public class HappyVersionCollectorMojo
   @Parameter(required = false)
   private String contextPath;
 
-  @Parameter(defaultValue = "sticky/happy.versions", required = true)
+  @Parameter(defaultValue = "happy.versions", required = true)
   private String path;
 
   @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)

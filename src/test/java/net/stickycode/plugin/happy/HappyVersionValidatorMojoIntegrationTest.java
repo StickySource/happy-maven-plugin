@@ -1,31 +1,36 @@
 package net.stickycode.plugin.happy;
 
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProject;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class HappyVersionValidatorMojoIntegrationTest {
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  MavenProject project;
-
-  @InjectMocks
-  HappyVersionValidatorMojo mojo = new HappyVersionValidatorMojo();
 
   @Test(expected = MojoFailureException.class)
   public void checkFail() throws MojoExecutionException, MojoFailureException, DependencyResolutionRequiredException {
+    HappyVersionValidatorMojo mojo = new HappyVersionValidatorMojo() {
+
+      @Override
+      List<ApplicationVersions> getApplicationVersions() {
+        return Lists.newArrayList(new ApplicationVersions().withVersionFiles("src/test/resources/happy.versions"));
+      }
+    };
+    mojo.execute();
+  }
+
+  @Test
+  public void emptyDoesNotFail() throws MojoExecutionException, MojoFailureException, DependencyResolutionRequiredException {
+    HappyVersionValidatorMojo mojo = new HappyVersionValidatorMojo() {
+
+      @Override
+      List<ApplicationVersions> getApplicationVersions() {
+        return Lists.emptyList();
+      }
+    };
     mojo.execute();
   }
 

@@ -3,9 +3,7 @@ package net.stickycode.plugin.happy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.StrictAssertions.assertThat;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.util.List;
 
@@ -18,6 +16,7 @@ public class HappyVersionValidatorMojoComponentTest {
   public void requestFailure() throws MalformedURLException, InterruptedException {
     HappyVersionValidatorMojo mojo = new HappyVersionValidatorMojo() {
 
+      @Override
       String getTargetDomain() {
         return "http://localhost:7878";
       }
@@ -49,6 +48,7 @@ public class HappyVersionValidatorMojoComponentTest {
   private ApplicationValidationCallback request(Blackhole blackhole) throws MalformedURLException, InterruptedException {
     HappyVersionValidatorMojo mojo = new HappyVersionValidatorMojo() {
 
+      @Override
       String getTargetDomain() {
         return "http://localhost:" + blackhole.getLocalPort();
       }
@@ -79,7 +79,7 @@ public class HappyVersionValidatorMojoComponentTest {
   }
 
   private List<Application> check(String path) throws MojoFailureException {
-    return new HappyVersionValidatorMojo().loadApplications(path);
+    return new ApplicationVersions().withVersionFiles(path).loadApplications();
   }
 
 }
