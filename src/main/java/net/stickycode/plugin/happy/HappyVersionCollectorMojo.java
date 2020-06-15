@@ -15,6 +15,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 @Mojo(name = "collect", threadSafe = true, defaultPhase = LifecyclePhase.GENERATE_RESOURCES, requiresProject = true)
@@ -27,11 +28,11 @@ public class HappyVersionCollectorMojo
   @Parameter(required = false)
   private String contextPath;
 
-  @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
+  @Parameter(defaultValue = "sticky/happy.versions", required = true)
   private String path;
 
   @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
-  private String testDirectory;
+  private String targetDirectory;
 
   @Parameter(defaultValue = "UTF-8", required = true)
   private String characterSet;
@@ -39,10 +40,13 @@ public class HappyVersionCollectorMojo
   @Component
   private BuildContext buildContext;
 
+  @Component
+  private MavenProjectHelper projectHelper;
+
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-    File file = Paths.get(testDirectory, path).toFile();
+    File file = Paths.get(targetDirectory, path).toFile();
     if (!file.getParentFile().exists())
       if (!file.getParentFile().mkdirs())
         throw new MojoFailureException("Failed to create directory " + file.getParentFile().getAbsolutePath());
@@ -52,6 +56,7 @@ public class HappyVersionCollectorMojo
     }
 
     getLog().info("application version stored in " + file.getAbsolutePath());
+    projectHelper.attachArtifact(this.project, "versions", "happy", file);
   }
 
   private OutputStreamWriter outputWriter(File file) throws MojoFailureException {

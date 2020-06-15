@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -38,8 +41,8 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
 
-  @Parameter(defaultValue = "META-INF/sticky/happy-versions", required = true)
-  private String[] versionFiles = new String[] { "META-INF/sticky/happy-versions" };
+  @Parameter(defaultValue = "${project.build.outputDirectory}/happy.versions", required = true)
+  private String[] versionFiles = new String[] { "target/happy.versions" };
 
   @Parameter(defaultValue = "http://localhost", required = true)
   private String targetDomain = "http://localhost";
@@ -68,20 +71,17 @@ public class HappyVersionValidatorMojo
   @Parameter(defaultValue = "5", required = true)
   private long retryPeriodSeconds = 1;
 
-  private ClassLoader classloader;
-
   private OkHttpClient client;
 
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-    buildClasspath();
     setupHttpClient();
 
     Instant finish = Instant.now().plusSeconds(retryDurationSeconds);
 
     ApplicationValidationResults results = new ApplicationValidationResults();
-    for (Application application : loadApplications(versionFiles)) {
+    for (Application application : loadApplications(getVersionFiles())) {
       results.add(createRequest(application));
     }
 
@@ -109,24 +109,8 @@ public class HappyVersionValidatorMojo
         throw new MojoFailureException(results.failureMessage());
   }
 
-  void buildClasspath() throws MojoFailureException {
-    try {
-      List<String> classpathElements = getProject().getCompileClasspathElements();
-      classpathElements.add(getProject().getBuild().getOutputDirectory());
-      classpathElements.add(getProject().getBuild().getTestOutputDirectory());
-      List<URL> urls = classpathElements.stream().map(x -> {
-        try {
-          return new File(x).toURI().toURL();
-        }
-        catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
-      }).collect(Collectors.toList());
-      this.classloader = new URLClassLoader(urls.toArray(new URL[classpathElements.size()]), getClass().getClassLoader());
-    }
-    catch (DependencyResolutionRequiredException e) {
-      throw new MojoFailureException("Dependencies not resolved", e);
-    }
+  String[] getVersionFiles() {
+    return versionFiles;
   }
 
   MavenProject getProject() {
@@ -175,11 +159,7 @@ public class HappyVersionValidatorMojo
   List<Application> loadApplications(String... paths) throws MojoFailureException {
     List<Application> applications = new ArrayList<>();
     for (String path : paths) {
-      Enumeration<URL> urls = applicationUrls(path);
-      while (urls.hasMoreElements()) {
-        URL url = urls.nextElement();
-        applications.addAll(loadApplication(url));
-      }
+      applications.addAll(loadApplication(Paths.get(path)));
     }
 
     if (applications.isEmpty())
@@ -189,11 +169,9 @@ public class HappyVersionValidatorMojo
     return applications;
   }
 
-  private List<Application> loadApplication(URL url) throws MojoFailureException {
-    getLog().info("loading application version from " + url.toString());
-    try (InputStream stream = url.openStream();) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
+  private List<Application> loadApplication(Path path) throws MojoFailureException {
+    getLog().info("loading application version from " + path.toString());
+    try (BufferedReader reader = versionsFileReader(path);) {
       List<Application> applications = new ArrayList<>();
       while (reader.ready()) {
         String line = reader.readLine();
@@ -201,31 +179,20 @@ public class HappyVersionValidatorMojo
       }
 
       if (applications.isEmpty())
-        throw new MojoFailureException("No contents found in " + url.toString());
+        throw new MojoFailureException("No contents found in " + path.toString());
 
       return applications;
 
     }
     catch (IOException e) {
       getLog().error(e);
-      throw new MojoFailureException("failed to load application versions from " + versionFiles);
+      throw new MojoFailureException("failed to load application versions from " + path);
     }
 
   }
 
-  private Enumeration<URL> applicationUrls(String path) throws MojoFailureException {
-    try {
-      getLog().debug("loading versions for resources called " + path);
-      return getClassloader().getResources(path);
-    }
-    catch (IOException e) {
-      getLog().error(e);
-      throw new MojoFailureException("failed to load application versions " + path);
-    }
-  }
-
-  ClassLoader getClassloader() {
-    return classloader;
+  BufferedReader versionsFileReader(Path path) throws IOException {
+    return Files.newBufferedReader(path);
   }
 
 }

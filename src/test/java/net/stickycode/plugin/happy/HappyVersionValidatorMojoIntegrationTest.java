@@ -26,9 +26,6 @@ public class HappyVersionValidatorMojoIntegrationTest {
 
   @Test(expected = MojoFailureException.class)
   public void checkFail() throws MojoExecutionException, MojoFailureException, DependencyResolutionRequiredException {
-    when(project.getCompileClasspathElements()).thenReturn(new ArrayList<>());
-    when(project.getBuild().getOutputDirectory()).thenReturn("target/classes");
-    when(project.getBuild().getTestOutputDirectory()).thenReturn("target/test-classes");
     mojo.execute();
   }
 

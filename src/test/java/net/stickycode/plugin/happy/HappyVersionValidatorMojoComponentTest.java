@@ -3,7 +3,9 @@ package net.stickycode.plugin.happy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.StrictAssertions.assertThat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.util.List;
 
@@ -62,7 +64,7 @@ public class HappyVersionValidatorMojoComponentTest {
 
   @Test(expected = MojoFailureException.class)
   public void noVersions() throws MojoFailureException {
-    check("META-INF/sticky/no-versions");
+    check("src/test/resources/no.versions");
   }
 
   @Test(expected = MojoFailureException.class)
@@ -72,19 +74,12 @@ public class HappyVersionValidatorMojoComponentTest {
 
   @Test
   public void loadVersions() throws MojoFailureException {
-    assertThat(check("META-INF/sticky/happy-versions")).contains(new Application("/:blah-1.2"));
-    assertThat(check("META-INF/sticky/happy-versions")).contains(new Application("/foo:foo-1.1"));
+    assertThat(check("src/test/resources/happy.versions")).contains(new Application("/:blah-1.2"));
+    assertThat(check("src/test/resources/happy.versions")).contains(new Application("/foo:foo-1.1"));
   }
 
   private List<Application> check(String path) throws MojoFailureException {
-    return new HappyVersionValidatorMojo() {
-
-      // can't build the classpath from the maven context now
-      // as we don't have one
-      ClassLoader getClassloader() {
-        return getClass().getClassLoader();
-      };
-    }.loadApplications(path);
+    return new HappyVersionValidatorMojo().loadApplications(path);
   }
 
 }
