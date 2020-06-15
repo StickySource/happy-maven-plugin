@@ -1,8 +1,6 @@
 package net.stickycode.plugin.happy;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import static java.lang.String.join;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -42,11 +41,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-import static java.lang.String.join;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 @Mojo(name = "validate", threadSafe = true, requiresProject = true, defaultPhase = LifecyclePhase.INTEGRATION_TEST, requiresDependencyResolution = ResolutionScope.TEST)
 public class HappyVersionValidatorMojo
-  extends AbstractMojo {
+    extends AbstractMojo {
 
   @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
@@ -87,7 +88,7 @@ public class HappyVersionValidatorMojo
 
   @Override
   public void execute()
-    throws MojoExecutionException, MojoFailureException {
+      throws MojoExecutionException, MojoFailureException {
     buildClasspath();
     setupHttpClient();
 
@@ -192,12 +193,12 @@ public class HappyVersionValidatorMojo
 
         @Override
         public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
-          throws CertificateException {
+            throws CertificateException {
         }
 
         @Override
         public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
-          throws CertificateException {
+            throws CertificateException {
         }
 
         @Override
